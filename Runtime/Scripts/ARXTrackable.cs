@@ -463,7 +463,7 @@ public class ARXTrackable : MonoBehaviour
                     #endif
 
                     if (!string.IsNullOrEmpty(dir) && !string.IsNullOrEmpty(NFTDataName)) {
-                        cfg = "nft;" + System.IO.Path.Combine(dir, NFTDataName);
+                        cfg = "nft;" + NFTDataName;
                     }
                     break;
 
