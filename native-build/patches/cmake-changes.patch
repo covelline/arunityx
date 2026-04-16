@@ -1,0 +1,18 @@
+--- a/Source/CMakeLists.txt
++++ b/Source/CMakeLists.txt
+@@ -183,7 +183,13 @@ elseif(ARX_TARGET_PLATFORM_ANDROID)
+ elseif(ARX_TARGET_PLATFORM_ANDROID)
+
+-    set(USE_CPARAM_SEARCH 1)
++    # [Covelline] cparamSearch を無効化する。
++    # cparamSearch はデバイスのカメラ歪みパラメータを artoolkitX 公式サーバからダウンロードする機能。
++    # オフライン環境でタイムアウト待ちが発生し著しく動作が遅くなるため、鈴木先生のリクエストにより無効化している。
++    set(USE_CPARAM_SEARCH 0)
+     set(ARX_INSTALL_LIBRARY_DIR "lib/${ANDROID_ABI}")
++    # [Covelline] Android 16KB ページサイズ対応。
++    # Google Play Store が Android 15 以降の端末向けに要求する 16KB アライメントに対応するためのリンカフラグ。
++    # 参照: https://developer.android.com/guide/practices/page-sizes
++    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,max-page-size=16384")
+     # Take only the first 3 fields from ANDROID_TOOLCHAIN_NAME (i.e. drop the "clang" or gcc version suffix, if present).
+     string(REGEX MATCH "^[^-]+-[^-]+-[^-]+" ARX_ANDROID_SYSTEM_LIBDIR_NAME ${ANDROID_TOOLCHAIN_NAME})
+     set(ARX_ANDROID_SYSTEM_LIBDIR ${CMAKE_SYSROOT}/usr/lib/${ARX_ANDROID_SYSTEM_LIBDIR_NAME})
