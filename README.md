@@ -57,7 +57,48 @@ Android 15 以降の端末・Google Play Store の要件に対応するため、
 
 ### 前提条件
 
-- Docker が起動していること
+#### 1. Docker
+
+ビルドは Docker コンテナ内で行います。[Docker Desktop](https://www.docker.com/products/docker-desktop/) をインストールして起動してください。
+
+インストール後、以下で確認できます:
+
+```bash
+docker info
+```
+
+**推奨設定**: Docker Desktop の設定でメモリを 4GB 以上に割り当ててください（C++ の 4 ABI 同時ビルドのため）。
+
+#### 2. Git LFS
+
+このリポジトリでは `.so` ファイルを [Git LFS](https://git-lfs.com/) で管理しています。
+Git LFS なしでコミットすると `.so` ファイルが正しく保存されないため、必ずセットアップしてください。
+
+```bash
+# Git LFS のインストール (macOS)
+brew install git-lfs
+
+# リポジトリで Git LFS を有効化 (初回のみ)
+git lfs install
+```
+
+インストール済みかどうかは以下で確認できます:
+
+```bash
+git lfs version
+```
+
+#### 3. ディスク空き容量
+
+初回ビルド時に以下をダウンロードするため、**3GB 以上**の空き容量が必要です。
+
+| ダウンロード内容 | サイズ目安 |
+|----------------|-----------|
+| Android NDK 27 | 約 1.5GB |
+| OpenCV for Android | 約 250MB |
+| その他ビルド成果物 | 約 200MB |
+
+2回目以降は Docker イメージがキャッシュされるため追加ダウンロードは不要です。
 
 ### ビルド手順
 
@@ -66,7 +107,7 @@ cd native-build/
 ./build.sh
 ```
 
-初回はDockerイメージのビルドと NDK・OpenCV のダウンロードがあるため時間がかかります（目安: 30分〜1時間）。
+初回は NDK・OpenCV のダウンロードとビルドがあるため時間がかかります（目安: 30分〜1時間）。
 
 ### ビルドの概要
 
@@ -90,3 +131,13 @@ Runtime/Plugins/Android/libs/
 ```
 
 ビルド完了後、差分を確認して `git commit` してください。
+
+### Docker イメージの削除
+
+ビルドが完了し、しばらく使わない場合は Docker イメージを削除してディスク容量を解放できます。
+
+```bash
+docker rmi arunityx-builder
+```
+
+次回ビルド時は `./build.sh` を実行すると自動的にイメージが再作成されます（NDK・OpenCV は再ダウンロードが必要です）。
