@@ -5,7 +5,7 @@
 # Runtime/Plugins/Android/libs/ 以下の .so ファイルを更新する。
 #
 # 使い方:
-#   cd build/
+#   cd native-build/
 #   ./build.sh
 #
 # 前提条件:
@@ -18,10 +18,11 @@ REPO_ROOT="${SCRIPT_DIR}/.."
 PLUGINS_DIR="${REPO_ROOT}/Runtime/Plugins/Android/libs"
 
 echo "==> Docker イメージをビルド中 (arunityx-builder)..."
-docker build -t arunityx-builder "${SCRIPT_DIR}"
+# --platform linux/amd64: Apple Silicon Mac でも linux-x86_64 の NDK ツールチェインを使うために指定
+docker build --platform linux/amd64 -t arunityx-builder "${SCRIPT_DIR}"
 
 echo "==> コンテナ内でビルドを実行中..."
-docker run --rm \
+docker run --rm --platform linux/amd64 \
     -v "${SCRIPT_DIR}/patches:/patches:ro" \
     -v "${SCRIPT_DIR}/docker-build.sh:/docker-build.sh:ro" \
     -v "${PLUGINS_DIR}:/output" \

@@ -1,4 +1,7 @@
-FROM ubuntu:22.04
+# Apple Silicon (M1/M2/M3) Mac の Docker は aarch64 で動くが、
+# Android NDK のホスト向けツールチェインは linux-x86_64 のみ提供されているため
+# --platform linux/amd64 で x86_64 (Rosetta 2 エミュレーション) を強制する。
+FROM --platform=linux/amd64 ubuntu:22.04
 
 # ビルドに必要なパッケージをインストール
 ENV DEBIAN_FRONTEND=noninteractive

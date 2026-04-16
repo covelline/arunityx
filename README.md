@@ -67,7 +67,34 @@ Android 15 以降の端末・Google Play Store の要件に対応するため、
 docker info
 ```
 
-**推奨設定**: Docker Desktop の設定でメモリを 4GB 以上に割り当ててください（C++ の 4 ABI 同時ビルドのため）。
+**推奨設定 (メモリ)**: Docker Desktop の設定でメモリを 4GB 以上に割り当ててください（C++ の 4 ABI 同時ビルドのため）。
+
+**Apple Silicon (M1/M2/M3) Mac の場合 — Rosetta 2 の設定**
+
+このビルドは `--platform linux/amd64` で x86_64 コンテナとして実行されます。
+Rosetta 2 を有効にしておくとネイティブ比 約 20% 遅い程度で動作します。
+
+以下の手順で Rosetta 2 を有効にしてください:
+
+1. Docker Desktop を開く
+2. **Settings → General**
+3. **「Use Virtualization Framework」** にチェック（これが前提条件）
+4. **「Use Rosetta for x86_64/amd64 emulation on Apple Silicon」** にチェック
+5. **Apply & Restart**
+
+> **補足**: Docker Desktop 4.44.0 以降は「Use Virtualization Framework」がデフォルトで有効になっています。最新版であれば手順 3 はスキップできます。
+
+Rosetta 2 自体がインストールされているかは以下で確認できます:
+
+```bash
+/usr/bin/pgrep -q oahd && echo "インストール済み" || echo "未インストール"
+```
+
+未インストールの場合は以下でインストールできます:
+
+```bash
+softwareupdate --install-rosetta
+```
 
 #### 2. Git LFS
 
