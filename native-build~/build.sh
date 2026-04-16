@@ -5,7 +5,7 @@
 # Runtime/Plugins/Android/libs/ 以下の .so ファイルを更新する。
 #
 # 使い方:
-#   cd native-build/
+#   cd native-build~/
 #   ./build.sh
 #
 # 前提条件:

@@ -130,7 +130,7 @@ git lfs version
 ### ビルド手順
 
 ```bash
-cd native-build/
+cd native-build~/
 ./build.sh
 ```
 
@@ -143,7 +143,7 @@ cd native-build/
 | ベースソース | [artoolkitx/artoolkitx](https://github.com/artoolkitx/artoolkitx) タグ `1.1.16` |
 | ビルド環境 | Ubuntu 22.04 (Docker) |
 | Android NDK | 27.0.12077973 (16KB ページサイズ対応版) |
-| 適用パッチ | `native-build/patches/cmake-changes.patch` |
+| 適用パッチ | `native-build~/patches/cmake-changes.patch` |
 
 ### ビルドで更新されるファイル
 
