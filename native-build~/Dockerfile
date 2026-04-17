@@ -5,7 +5,8 @@ FROM --platform=linux/amd64 ubuntu:22.04
 
 # ビルドに必要なパッケージをインストール
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y \
+RUN sed -i 's|http://archive.ubuntu.com/ubuntu|http://ftp.iij.ad.jp/pub/linux/ubuntu/archive|g; s|http://security.ubuntu.com/ubuntu|http://ftp.iij.ad.jp/pub/linux/ubuntu/archive|g' /etc/apt/sources.list && \
+    apt-get update && apt-get install -y \
     cmake \
     git \
     curl \
