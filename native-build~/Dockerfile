@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     unzip \
-    python3 \
+    patch \
     make \
     ninja-build \
     && rm -rf /var/lib/apt/lists/*
@@ -27,7 +27,7 @@ RUN mkdir -p ${ANDROID_HOME}/ndk && \
     unzip -q /tmp/ndk.zip -d /tmp/ndk-unpack && \
     mv /tmp/ndk-unpack/android-ndk-${NDK_VERSION} ${ANDROID_HOME}/ndk/27.0.12077973 && \
     rm -f /tmp/ndk.zip && \
-    # artoolkitx 1.1.16 の build.sh は ndk-bundle パスを参照するためシンボリックリンクを作成
+    # artoolkitX の CMake ビルドは ndk-bundle パスを参照するためシンボリックリンクを作成
     ln -sf ${ANDROID_HOME}/ndk/27.0.12077973 ${ANDROID_HOME}/ndk-bundle
 
 WORKDIR /work

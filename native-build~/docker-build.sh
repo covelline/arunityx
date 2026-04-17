@@ -1,89 +1,27 @@
 #!/bin/bash
 # docker-build.sh
 # Docker コンテナ内で実行されるビルドスクリプト。
-# artoolkitx のソースをクローンし、パッチを適用してAndroid向けにビルドする。
+# artoolkitX のソースをクローンし、パッチを適用してAndroid向けにビルドする。
 
 set -e
 
-# [Covelline] artoolkitx 1.1.16 を使用する。
-# arunityx release/1.2.8 の dev/artoolkitx-version.txt で指定されていたバージョン。
-ARTOOLKITX_VERSION="1.1.16"
+# [Covelline] artoolkitX 1.1.17 を使用する。
+# ~/workspace/artoolkitx の disable-cparam-search ブランチが 1.1.17 ベースで
+# cparamSearch 無効化パッチを適用したものであることを確認済み。
+ARTOOLKITX_VERSION="1.1.17"
 
 ARTOOLKITX_SRC="/tmp/artoolkitx"
 OUTPUT_DIR="/output"
 
-echo "==> artoolkitx ${ARTOOLKITX_VERSION} をクローン中..."
+echo "==> artoolkitX ${ARTOOLKITX_VERSION} をクローン中..."
 git clone --depth 1 --branch "${ARTOOLKITX_VERSION}" \
     https://github.com/artoolkitx/artoolkitx.git "${ARTOOLKITX_SRC}"
 
-echo "==> ソースを変更中..."
-# patch コマンドは blank 行や文字コードの扱いが繊細なため、Python で直接書き換える。
-# 変更内容の差分は patches/cmake-changes.patch に記録してある。
-python3 << 'EOF'
-import sys
-
-# --- CMakeLists.txt の変更 ---
-# [Covelline] Android ビルドの USE_CPARAM_SEARCH を 0 に変更し、16KB フラグを追加する。
-cmake_path = "/tmp/artoolkitx/Source/CMakeLists.txt"
-with open(cmake_path, "r") as f:
-    content = f.read()
-
-original = 'elseif(ARX_TARGET_PLATFORM_ANDROID)\n\n    set(USE_CPARAM_SEARCH 1)\n    set(ARX_INSTALL_LIBRARY_DIR "lib/${ANDROID_ABI}")'
-replaced = (
-    'elseif(ARX_TARGET_PLATFORM_ANDROID)\n\n'
-    '    # [Covelline] cparamSearch 無効化 (オフライン時のタイムアウト問題対策)\n'
-    '    set(USE_CPARAM_SEARCH 0)\n'
-    '    set(ARX_INSTALL_LIBRARY_DIR "lib/${ANDROID_ABI}")\n'
-    '    # [Covelline] Android 16KB ページサイズ対応フラグ\n'
-    '    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,max-page-size=16384")'
-)
-if original not in content:
-    print("ERROR: CMakeLists.txt の書き換え対象が見つかりません。artoolkitx のバージョンが想定外の可能性があります。")
-    sys.exit(1)
-content = content.replace(original, replaced)
-with open(cmake_path, "w") as f:
-    f.write(content)
-print("CMakeLists.txt 変更完了: USE_CPARAM_SEARCH=0, -Wl,-z,max-page-size=16384")
-
-# --- cparamSearch.h にスタブ定義を追加 ---
-# [Covelline] videoAndroid.cpp は #if USE_CPARAM_SEARCH ガードなしで cparamSearch の関数・型を直接呼んでいる。
-# USE_CPARAM_SEARCH=0 にすると宣言が消えてコンパイルエラーになるため、
-# #else ブランチに何もしないスタブ定義を追加して対処する。
-header_path = "/tmp/artoolkitx/Source/ARX/ARVideo/cparamSearch.h"
-with open(header_path, "r") as f:
-    header = f.read()
-
-stub = (
-    "\n#else // !USE_CPARAM_SEARCH - スタブ定義 (cparamSearch 無効時のコンパイルエラー回避)\n"
-    "#include <ARX/ARVideo/video.h>\n"
-    "typedef enum {"
-    " CPARAM_SEARCH_STATE_INITIAL=0,CPARAM_SEARCH_STATE_IN_PROGRESS=1,"
-    "CPARAM_SEARCH_STATE_RESULT_NULL=2,CPARAM_SEARCH_STATE_OK=3,"
-    "CPARAM_SEARCH_STATE_FAILED_ERROR=-1,CPARAM_SEARCH_STATE_FAILED_NO_NETWORK=-2,"
-    "CPARAM_SEARCH_STATE_FAILED_NETWORK_FAILED=-3,CPARAM_SEARCH_STATE_FAILED_SERVICE_UNREACHABLE=-4,"
-    "CPARAM_SEARCH_STATE_FAILED_SERVICE_UNAVAILABLE=-5,CPARAM_SEARCH_STATE_FAILED_SERVICE_FAILED=-6,"
-    "CPARAM_SEARCH_STATE_FAILED_SERVICE_NOT_PERMITTED=-7,CPARAM_SEARCH_STATE_FAILED_SERVICE_INVALID_REQUEST=-8"
-    " } CPARAM_SEARCH_STATE;\n"
-    "typedef void (*CPARAM_SEARCH_CALLBACK)(CPARAM_SEARCH_STATE state, float progress, const ARParam *cparam, void *userdata);\n"
-    "#ifdef __cplusplus\nextern \"C\" {\n#endif\n"
-    "static inline int cparamSearchInit(const char *a,const char *b,int c,const char *d,const char *e)"
-    "{(void)a;(void)b;(void)c;(void)d;(void)e;return 0;}\n"
-    "static inline int cparamSearchFinal(void){return 0;}\n"
-    "static inline int cparamSearchSetInternetState(int s){(void)s;return 0;}\n"
-    "static inline CPARAM_SEARCH_STATE cparamSearch(const char *a,int b,int c,int d,float e,CPARAM_SEARCH_CALLBACK f,void *g)"
-    "{(void)a;(void)b;(void)c;(void)d;(void)e;(void)f;(void)g;return CPARAM_SEARCH_STATE_RESULT_NULL;}\n"
-    "#ifdef __cplusplus\n}\n#endif\n"
-)
-
-target = "#endif // USE_CPARAM_SEARCH"
-if target not in header:
-    print("ERROR: cparamSearch.h の構造が想定外です")
-    sys.exit(1)
-header = header.replace(target, stub + target)
-with open(header_path, "w") as f:
-    f.write(header)
-print("cparamSearch.h スタブ追加完了")
-EOF
+echo "==> パッチを適用中..."
+# 1. cparamSearch 無効化 (USE_CPARAM_SEARCH=0, videoAndroid.cpp にガード追加)
+patch -p1 -d "${ARTOOLKITX_SRC}" < /patches/disable-cparam-search.patch
+# 2. Android 16KB ページサイズ対応リンカフラグ追加
+patch -p1 -d "${ARTOOLKITX_SRC}" < /patches/android-16kb-page-size.patch
 
 cd "${ARTOOLKITX_SRC}/Source"
 
@@ -136,7 +74,7 @@ for abi in $ABIS; do
     cp "${ARTOOLKITX_SRC}/SDK/lib/${abi}/libARX.so" "${OUTPUT_DIR}/${abi}/"
 
     # [Covelline] libc++_shared.so: NDK 27 から直接コピーして 16KB 対応を確実にする。
-    # artoolkitx のビルドが配置する libc++_shared.so と同じファイルだが、
+    # artoolkitX のビルドが配置する libc++_shared.so と同じファイルだが、
     # NDK バージョンを明示することで意図を明確にしている。
     triple="${ABI_TO_TRIPLE[$abi]}"
     cp "${NDK_PREBUILT}/sysroot/usr/lib/${triple}/libc++_shared.so" "${OUTPUT_DIR}/${abi}/"

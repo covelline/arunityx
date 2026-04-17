@@ -140,10 +140,20 @@ cd native-build~/
 
 | 項目 | 内容 |
 |------|------|
-| ベースソース | [artoolkitx/artoolkitx](https://github.com/artoolkitx/artoolkitx) タグ `1.1.16` |
+| ベースソース | [artoolkitx/artoolkitx](https://github.com/artoolkitx/artoolkitx) タグ `1.1.17` |
 | ビルド環境 | Ubuntu 22.04 (Docker) |
 | Android NDK | 27.0.12077973 (16KB ページサイズ対応版) |
-| 適用パッチ | `native-build~/patches/cmake-changes.patch` |
+| 適用パッチ | `native-build~/patches/disable-cparam-search.patch`<br>`native-build~/patches/android-16kb-page-size.patch` |
+
+#### artoolkitX 1.1.17 を使用する理由
+
+`upm2` ブランチに現在コミットされている `.so` ファイルのビルド元を逆引きした結果、このバージョンを採用しています。
+
+- `git log` でコミット `89e9fc6 "Replace with cparamSearch disabled version"` を確認 — 手動ビルドした `.so` を置き換えたもの
+- ビルド元ソースは [covelline/artoolkitx `disable-cparam-search` ブランチ](https://github.com/covelline/artoolkitx/tree/disable-cparam-search)
+- そのブランチの `Source/CMakeLists.txt` を読むとバージョンは **1.1.17** であり、GitHub 上にも同名タグ (`f86e4571`) が存在することを確認
+
+別バージョンでもビルド自体は可能ですが、現行バイナリとの差分リスクを避けるため、実績のある 1.1.17 を使用しています。
 
 ### ビルドで更新されるファイル
 
