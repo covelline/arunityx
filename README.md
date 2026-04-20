@@ -53,6 +53,24 @@ Android 15 以降の端末・Google Play Store の要件に対応するため、
 
 ## ネイティブライブラリのビルド方法
 
+> **注意**: 現時点では iOS のビルドはこのリポジトリ単体では完結できません。iOS ライブラリのビルドには別リポジトリ ([covelline/artoolkitx](https://github.com/covelline/artoolkitx)) が必要です。
+
+### iOS
+
+macOS + Xcode が必要です。artoolkitx の Covelline フォーク (`disable-cparam-search` ブランチ) を使います。
+
+```sh
+git clone -b disable-cparam-search https://github.com/covelline/artoolkitx.git
+cd artoolkitx/Source
+./build.sh ios
+```
+
+`SDK/lib/libARX.a` が生成されるので、`Runtime/Plugins/iOS/libARX.a` に上書きして `git commit` してください。
+
+---
+
+### Android
+
 `Runtime/Plugins/Android/libs/` 以下の `.so` ファイルは、Docker を使ってビルドします。
 
 ### 前提条件
