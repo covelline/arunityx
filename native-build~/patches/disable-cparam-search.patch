@@ -1,0 +1,93 @@
+cparamSearch を無効化する (USE_CPARAM_SEARCH=0)。
+cparamSearch は artoolkitX 公式サーバからデバイスのカメラ歪みパラメータを
+ダウンロードする機能。オフライン環境でタイムアウト待ちが発生し著しく動作が
+遅くなるため無効化している。
+
+~/workspace/artoolkitx の disable-cparam-search ブランチ
+(artoolkitX 1.1.17 ベース) で行われた変更を再現したもの。
+
+diff --git a/Source/CMakeLists.txt b/Source/CMakeLists.txt
+--- a/Source/CMakeLists.txt
++++ b/Source/CMakeLists.txt
+@@ -183,7 +183,7 @@ elseif(ARX_TARGET_PLATFORM_MACOS)
+ 
+ elseif(ARX_TARGET_PLATFORM_ANDROID)
+ 
+-    set(USE_CPARAM_SEARCH 1)
++    set(USE_CPARAM_SEARCH 0)
+     set(ARX_INSTALL_LIBRARY_DIR "lib/${ANDROID_ABI}")
+     # Take only the first 3 fields from ANDROID_TOOLCHAIN_NAME (i.e. drop the "clang" or gcc version suffix, if present).
+     string(REGEX MATCH "^[^-]+-[^-]+-[^-]+" ARX_ANDROID_SYSTEM_LIBDIR_NAME ${ANDROID_TOOLCHAIN_NAME})
+diff --git a/Source/ARX/ARVideo/Android/videoAndroid.cpp b/Source/ARX/ARVideo/Android/videoAndroid.cpp
+index 9393955e..4225d82b 100644
+--- a/Source/ARX/ARVideo/Android/videoAndroid.cpp
++++ b/Source/ARX/ARVideo/Android/videoAndroid.cpp
+@@ -459,11 +459,13 @@ AR2VideoParamAndroidT *ar2VideoOpenAsyncAndroid(const char *config, void (*callb
+         }
+     }
+ 
++#if USE_CPARAM_SEARCH
+ 	// Initialisation required before cparamSearch can be used.
+     if (cparamSearchInit(cacheDir ? cacheDir : "cparam_cache", cacheInitDir ? cacheInitDir : "cparam_cache", false, csdu, csat) < 0) {
+         ARLOGe("Unable to initialise cparamSearch.\n");
+         goto bail;
+     };
++#endif
+ 
+     // Initial state.
+     vid->pixelFormat = AR_PIXEL_FORMAT_INVALID;
+@@ -752,9 +754,11 @@ bail2:
+ bail1:
+     pthread_mutex_destroy(&vid->frameLock);
+     free(vid->device_id);
++#if USE_CPARAM_SEARCH
+     if (cparamSearchFinal() < 0) {
+         ARLOGe("Unable to finalise cparamSearch.\n");
+     }
++#endif
+ bail:
+     free(vid);
+     vid = NULL;
+@@ -807,10 +811,11 @@ int ar2VideoCloseAndroid(AR2VideoParamAndroidT *vid)
+ 	pthread_mutex_destroy(&(vid->frameLock));
+     free(vid->name);
+     free(vid->device_id);
++#if USE_CPARAM_SEARCH
+     if (cparamSearchFinal() < 0) {
+         ARLOGe("Unable to finalise cparamSearch.\n");
+     }
+-
++#endif
+     free(vid);
+ 
+     return 0;
+@@ -1076,12 +1081,13 @@ int ar2VideoGetParamiAndroid(AR2VideoParamAndroidT *vid, int paramName, int *val
+ int ar2VideoSetParamiAndroid(AR2VideoParamAndroidT *vid, int paramName, int  value)
+ {
+     if (!vid) return (-1); // Sanity check.
+-
++#if USE_CPARAM_SEARCH
+     switch (paramName) {
+         case AR_VIDEO_PARAM_ANDROID_INTERNET_STATE: return (cparamSearchSetInternetState(value)); break;
+         default:
+             return (-1);
+     }
++#endif
+     return (0);
+ }
+ 
+@@ -1161,6 +1167,7 @@ int ar2VideoSetParamsAndroid(AR2VideoParamAndroidT *vid, const int paramName, co
+     return (0);
+ }
+ 
++#if USE_CPARAM_SEARCH
+ static void cparamSeachCallback(CPARAM_SEARCH_STATE state, float progress, const ARParam *cparam, void *userdata)
+ {
+     int final = false;
+@@ -1216,5 +1223,6 @@ int ar2VideoGetCParamAsyncAndroid(AR2VideoParamAndroidT *vid, void (*callback)(c
+ 
+     return (0);
+ }
++#endif
+ 
+ #endif // ARVIDEO_INPUT_ANDROID
