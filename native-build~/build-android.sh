@@ -1,12 +1,12 @@
 #!/bin/bash
-# build.sh
+# build-android.sh
 # ホスト側で実行するスクリプト。
 # Docker イメージをビルドし、コンテナ内でネイティブライブラリをビルドして
 # Runtime/Plugins/Android/libs/ 以下の .so ファイルを更新する。
 #
 # 使い方:
 #   cd native-build~/
-#   ./build.sh
+#   ./build-android.sh
 #
 # 前提条件:
 #   - Docker が起動していること

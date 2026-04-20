@@ -149,7 +149,7 @@ git lfs version
 
 ```bash
 cd native-build~/
-./build.sh
+./build-android.sh
 ```
 
 初回は NDK・OpenCV のダウンロードとビルドがあるため時間がかかります（目安: 30分〜1時間）。
@@ -195,4 +195,4 @@ Runtime/Plugins/Android/libs/
 docker rmi arunityx-builder
 ```
 
-次回ビルド時は `./build.sh` を実行すると自動的にイメージが再作成されます（NDK・OpenCV は再ダウンロードが必要です）。
+次回ビルド時は `./build-android.sh` を実行すると自動的にイメージが再作成されます（NDK・OpenCV は再ダウンロードが必要です）。
