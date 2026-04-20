@@ -11,6 +11,7 @@
 # 前提条件:
 #   - Docker が起動していること
 #   - Xcode がインストールされていること
+#   - cmake がインストールされていること (brew install cmake)
 
 set -e
 
@@ -21,6 +22,11 @@ IOS_SRC_DIR="${SCRIPT_DIR}/.ios-src"
 
 if ! xcode-select -p > /dev/null 2>&1; then
     echo "エラー: Xcode が見つかりません。Xcode をインストールしてください。"
+    exit 1
+fi
+
+if ! command -v cmake > /dev/null 2>&1; then
+    echo "エラー: cmake が見つかりません。'brew install cmake' でインストールしてください。"
     exit 1
 fi
 

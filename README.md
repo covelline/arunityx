@@ -120,6 +120,7 @@ git lfs version
 #### 追加前提条件
 
 - Xcode がインストールされていること
+- cmake がインストールされていること (`brew install cmake`)
 
 #### ビルド手順
 
