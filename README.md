@@ -53,39 +53,19 @@ Android 15 以降の端末・Google Play Store の要件に対応するため、
 
 ## ネイティブライブラリのビルド方法
 
-> **注意**: 現時点では iOS のビルドはこのリポジトリ単体では完結できません。iOS ライブラリのビルドには別リポジトリ ([covelline/artoolkitx](https://github.com/covelline/artoolkitx)) が必要です。
+iOS・Android ともに Docker を使ってソースを準備します。
 
-### iOS
-
-macOS + Xcode が必要です。artoolkitx の Covelline フォーク (`disable-cparam-search` ブランチ) を使います。
-
-```sh
-git clone -b disable-cparam-search https://github.com/covelline/artoolkitx.git
-cd artoolkitx/Source
-./build.sh ios
-```
-
-`SDK/lib/libARX.a` が生成されるので、`Runtime/Plugins/iOS/libARX.a` に上書きして `git commit` してください。
-
----
-
-### Android
-
-`Runtime/Plugins/Android/libs/` 以下の `.so` ファイルは、Docker を使ってビルドします。
-
-### 前提条件
+### 共通前提条件
 
 #### 1. Docker
 
-ビルドは Docker コンテナ内で行います。[Docker Desktop](https://www.docker.com/products/docker-desktop/) をインストールして起動してください。
-
-インストール後、以下で確認できます:
+[Docker Desktop](https://www.docker.com/products/docker-desktop/) をインストールして起動してください。
 
 ```bash
 docker info
 ```
 
-**推奨設定 (メモリ)**: Docker Desktop の設定でメモリを 4GB 以上に割り当ててください（C++ の 4 ABI 同時ビルドのため）。
+**推奨設定 (メモリ)**: Docker Desktop の設定でメモリを 4GB 以上に割り当ててください（Android の 4 ABI 同時ビルドのため）。
 
 **Apple Silicon (M1/M2/M3) Mac の場合 — Rosetta 2 の設定**
 
@@ -116,8 +96,8 @@ softwareupdate --install-rosetta
 
 #### 2. Git LFS
 
-このリポジトリでは `.so` ファイルを [Git LFS](https://git-lfs.com/) で管理しています。
-Git LFS なしでコミットすると `.so` ファイルが正しく保存されないため、必ずセットアップしてください。
+このリポジトリでは `.so` / `.a` ファイルを [Git LFS](https://git-lfs.com/) で管理しています。
+Git LFS なしでコミットするとファイルが正しく保存されないため、必ずセットアップしてください。
 
 ```bash
 # Git LFS のインストール (macOS)
@@ -133,7 +113,47 @@ git lfs install
 git lfs version
 ```
 
-#### 3. ディスク空き容量
+---
+
+### iOS
+
+#### 追加前提条件
+
+- Xcode がインストールされていること
+- cmake がインストールされていること (`brew install cmake`)
+
+#### ビルド手順
+
+```bash
+cd native-build~/
+./build-ios.sh
+```
+
+Docker でソース（upstream artoolkitx 1.1.17 + パッチ）と OpenCV for iOS を準備し、ホスト側 Xcode でビルドします。
+
+2回目以降はソース・OpenCV のキャッシュ（`native-build~/.ios-src/`）が使われるため高速に実行されます。
+
+#### ビルドの概要
+
+| 項目 | 内容 |
+|------|------|
+| ベースソース | [artoolkitx/artoolkitx](https://github.com/artoolkitx/artoolkitx) タグ `1.1.17` |
+| ソース準備環境 | Ubuntu 22.04 (Docker) |
+| ビルド環境 | macOS + Xcode |
+| 適用パッチ | `native-build~/patches/disable-cparam-search.patch`<br>`native-build~/patches/android-16kb-page-size.patch` |
+
+#### ビルドで更新されるファイル
+
+```
+Runtime/Plugins/iOS/
+  libARX.a
+```
+
+---
+
+### Android
+
+#### 追加前提条件
 
 初回ビルド時に以下をダウンロードするため、**3GB 以上**の空き容量が必要です。
 
@@ -145,16 +165,16 @@ git lfs version
 
 2回目以降は Docker イメージがキャッシュされるため追加ダウンロードは不要です。
 
-### ビルド手順
+#### ビルド手順
 
 ```bash
 cd native-build~/
-./build.sh
+./build-android.sh
 ```
 
 初回は NDK・OpenCV のダウンロードとビルドがあるため時間がかかります（目安: 30分〜1時間）。
 
-### ビルドの概要
+#### ビルドの概要
 
 | 項目 | 内容 |
 |------|------|
@@ -168,24 +188,24 @@ cd native-build~/
 `upm2` ブランチに現在コミットされている `.so` ファイルのビルド元を逆引きした結果、このバージョンを採用しています。
 
 - `git log` でコミット `89e9fc6 "Replace with cparamSearch disabled version"` を確認 — 手動ビルドした `.so` を置き換えたもの
-- ビルド元ソースは [covelline/artoolkitx `disable-cparam-search` ブランチ](https://github.com/covelline/artoolkitx/tree/disable-cparam-search)
-- そのブランチの `Source/CMakeLists.txt` を読むとバージョンは **1.1.17** であり、GitHub 上にも同名タグ (`f86e4571`) が存在することを確認
+- ビルド元ソースは [covelline/artoolkitx `disable-cparam-search` ブランチ](https://github.com/covelline/artoolkitx/tree/disable-cparam-search) で、upstream 1.1.17 に cparamSearch 無効化パッチを適用したもの
+- 現在はそのパッチを `native-build~/patches/` に取り込み、upstream から直接ビルドしている
 
 別バージョンでもビルド自体は可能ですが、現行バイナリとの差分リスクを避けるため、実績のある 1.1.17 を使用しています。
 
-### ビルドで更新されるファイル
+#### ビルドで更新されるファイル
 
 ```
 Runtime/Plugins/Android/libs/
   arm64-v8a/
-    libARX.so         ← artoolkitx 1.1.16 をパッチ適用してビルド
+    libARX.so         ← artoolkitx 1.1.17 をパッチ適用してビルド
     libc++_shared.so  ← NDK 27 から取得 (16KB 対応済み)
   armeabi-v7a/        ← 同様
   x86/                ← 同様
   x86_64/             ← 同様
 ```
 
-ビルド完了後、差分を確認して `git commit` してください。
+---
 
 ### Docker イメージの削除
 
@@ -195,4 +215,4 @@ Runtime/Plugins/Android/libs/
 docker rmi arunityx-builder
 ```
 
-次回ビルド時は `./build.sh` を実行すると自動的にイメージが再作成されます（NDK・OpenCV は再ダウンロードが必要です）。
+次回ビルド時は `./build-android.sh` または `./build-ios.sh` を実行すると自動的にイメージが再作成されます（NDK・OpenCV は再ダウンロードが必要です）。
