@@ -1,0 +1,2 @@
+# iOS ビルド用ソースキャッシュ（build-ios.sh が生成）
+.ios-src/

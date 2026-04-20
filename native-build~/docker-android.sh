@@ -1,27 +1,16 @@
 #!/bin/bash
-# docker-build.sh
+# docker-android.sh
 # Docker コンテナ内で実行されるビルドスクリプト。
-# artoolkitX のソースをクローンし、パッチを適用してAndroid向けにビルドする。
+# ソース準備（docker-common.sh）後、Android 向けにビルドして成果物を /output に書き出す。
 
 set -e
 
-# [Covelline] artoolkitX 1.1.17 を使用する。
-# ~/workspace/artoolkitx の disable-cparam-search ブランチが 1.1.17 ベースで
-# cparamSearch 無効化パッチを適用したものであることを確認済み。
-ARTOOLKITX_VERSION="1.1.17"
+source /docker-common.sh
 
 ARTOOLKITX_SRC="/tmp/artoolkitx"
 OUTPUT_DIR="/output"
 
-echo "==> artoolkitX ${ARTOOLKITX_VERSION} をクローン中..."
-git clone --depth 1 --branch "${ARTOOLKITX_VERSION}" \
-    https://github.com/artoolkitx/artoolkitx.git "${ARTOOLKITX_SRC}"
-
-echo "==> パッチを適用中..."
-# 1. cparamSearch 無効化 (USE_CPARAM_SEARCH=0, videoAndroid.cpp にガード追加)
-patch -p1 -d "${ARTOOLKITX_SRC}" < /patches/disable-cparam-search.patch
-# 2. Android 16KB ページサイズ対応リンカフラグ追加
-patch -p1 -d "${ARTOOLKITX_SRC}" < /patches/android-16kb-page-size.patch
+prepare_source "${ARTOOLKITX_SRC}"
 
 cd "${ARTOOLKITX_SRC}/Source"
 

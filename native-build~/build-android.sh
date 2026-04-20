@@ -24,10 +24,11 @@ docker build --platform linux/amd64 -t arunityx-builder "${SCRIPT_DIR}"
 echo "==> コンテナ内でビルドを実行中..."
 docker run --rm --platform linux/amd64 \
     -v "${SCRIPT_DIR}/patches:/patches:ro" \
-    -v "${SCRIPT_DIR}/docker-build.sh:/docker-build.sh:ro" \
+    -v "${SCRIPT_DIR}/docker-common.sh:/docker-common.sh:ro" \
+    -v "${SCRIPT_DIR}/docker-android.sh:/docker-android.sh:ro" \
     -v "${PLUGINS_DIR}:/output" \
     arunityx-builder \
-    bash /docker-build.sh
+    bash /docker-android.sh
 
 echo ""
 echo "==> 完了。更新されたファイル:"
